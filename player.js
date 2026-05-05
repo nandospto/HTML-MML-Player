@@ -26,6 +26,31 @@ async function iniciarPlayer() {
         document.getElementById('mml-ch4').value
     ];
     notaslidas = mmldataread(mmlData);
+
+    Tone.getTransport().stop();
+    Tone.getTransport().cancel();
+
+    const synths = [canais.ch1, canais.ch2, canais.ch3, canais.ch4];
+
+    notaslidas.forEach((canal, indicecanal) => {
+        let totaltime = 0;
+        const _synthnow = synths[indicecanal];
+
+        canal.forEach(nota => {
+            Tone.getTransport().schedule((time) => {
+                if (indicecanal === 3) {
+                    _synthnow[3].triggerAttackRelease(nota.nota, nota.duracao, time);
+                }
+                else {
+                    _synthnow.triggerAttackRelease(nota.nota, nota.duracao, time);
+                }
+            }, totaltime);
+            totaltime += Tone.Time(nota.duracao).toSeconds();
+        });
+
+    });
+    console.log('start!');
+    Tone.Transport.start();
 }
 
 function CriarNota(valor, duracao) {
@@ -38,8 +63,8 @@ function CriarNota(valor, duracao) {
 function mmldataread(mmlstringdata) {
     var notas = [[], [], [], []]; // Array para armazenar as notas de cada canal
     // var _temp_notas = CriarNota('', '');
-    
-    
+
+
     // Leitura de cada canal juntamente com todas as notas recebidas
     for (let channel of mmlstringdata) {
         let indexofChannel = mmlstringdata.indexOf(channel); // Índice do canal atual
@@ -52,8 +77,8 @@ function mmldataread(mmlstringdata) {
                 ChannelDefaultOctave[indexofChannel] = parseInt(next_char); // Atualiza a oitava padrão do canal
                 i++;
             }
-            else if(/[<>]/.test(char)){
-                if(char === '>') {
+            else if (/[<>]/.test(char)) {
+                if (char === '>') {
                     ChannelDefaultOctave[indexofChannel] += 1; // Aumenta a oitava padrão do canal
                 }
                 else {
@@ -69,16 +94,16 @@ function mmldataread(mmlstringdata) {
                     i++;
                 }
                 _notadanota += ChannelDefaultOctave[indexofChannel]; // Adiciona a oitava na nota
-                
+
                 let _temp_duracaodanota = ""; // Duração padrão da nota
 
-                while(/[0-9]/.test(channel[i + 1])){
+                while (/[0-9]/.test(channel[i + 1])) {
                     _temp_duracaodanota += channel[++i];
                 }
 
                 let _duracaodanota = _temp_duracaodanota != ""
-                ? _temp_duracaodanota + "n"
-                : ChannelDefaultNoteLength[indexofChannel] + "n";
+                    ? _temp_duracaodanota + "n"
+                    : ChannelDefaultNoteLength[indexofChannel] + "n";
 
                 notas[indexofChannel].push(CriarNota(_notadanota, _duracaodanota)); // Adiciona a nota ao array do canal
             }
